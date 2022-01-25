@@ -1,0 +1,2 @@
+include ':app', ':md-toast'
+rootProject.name = "App Base"
