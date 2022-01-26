@@ -1,6 +1,8 @@
 package com.example.appbase;
 
+import android.app.DownloadManager;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -9,14 +11,21 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.View;
+import android.webkit.CookieManager;
 import android.webkit.DownloadListener;
+import android.webkit.URLUtil;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.ProgressBar;
 import android.widget.Toast;
+
+import com.valdesekamdem.library.mdtoast.MDToast;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -30,35 +39,107 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLDecoder;
+import java.net.URLStreamHandler;
+import java.net.URLStreamHandlerFactory;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-    private String URL = "https://gpetest.simbiosis-dg-apps.com";
-
-
+    private String URLSistem = "https://gpetest.simbiosis-dg-apps.com";
+    WebView webview;
+    ProgressBar progressBar;
+    ProgressDialog progressDialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
 
-        WebView webview = findViewById(R.id.webView);
-        webview.getSettings().setJavaScriptEnabled(true);
-        webview.setWebChromeClient(new WebChromeClient());
-        webview.requestFocus();
-//	webview.loadUrl("file:///android_asset/risktest.html");
+        progressBar=findViewById(R.id.progresbar);
+        progressDialog= new ProgressDialog(this);
+        progressDialog.setMessage("Cargando por favor espere...");
 
+        webview = findViewById(R.id.webView);
+        webview.getSettings().setJavaScriptEnabled(true);
+        webview.getSettings().setDomStorageEnabled(true);
+        webview.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
+
+        //webview.setWebChromeClient(new WebChromeClient());
+       /* webview.setWebChromeClient(new WebChromeClient(){
+            @Override
+            public void onProgressChanged(WebView web,int newProgress){
+                super.onProgressChanged(web, newProgress);
+                progressBar.setVisibility(View.VISIBLE);
+                progressBar.setProgress(newProgress);
+                progressDialog.show();
+                if (newProgress==100){
+                    progressBar.setVisibility(View.GONE);
+                    setTitle(getTitle());
+                    progressDialog.dismiss();
+                }
+
+            }
+        });*/
+        webview.requestFocus();
+       //webview.loadUrl("file:///android_asset/risktest.html");
         //webview.loadUrl(jcrs_sub.get(position).addr);
-        webview.loadUrl(URL);
+        webview.loadUrl(URLSistem);
         // Establecer el cliente de vista web
         webview.setWebViewClient(new MyWebViewClient());
         webview.setDownloadListener(new MyWebViewDownLoadListener());
-    }
 
-    // clase interna
+
+    }
+    private void downloadBySystem(String url, String contentDisposition, String mimeType) {
+        //DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url.trim()));
+        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url.replace("blob:","")));
+        // Permitir el escaneo de medios y agregarse a bibliotecas de medios, como álbumes y música, según el tipo de archivos descargados
+       // request.allowScanningByMediaScanner();
+        // Establece el tipo de visualización de la notificación, muestra la notificación cuando la descarga está en curso y después de la finalización
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_ONLY_COMPLETION);
+        // Establecer el título de la barra de notificaciones, si no se establece, el nombre del archivo se utilizará por defecto
+        request.setTitle("Descargando gpexprt");
+        // Establecer la descripción de la barra de notificaciones
+        request.setDescription("This is description");
+        // Permitir la descarga con tráfico de facturación
+      //  request.setAllowedOverMetered(true);
+        // Permitir que el registro sea visible en la interfaz de administración de descargas
+        request.setVisibleInDownloadsUi(true);
+        // Permitir la descarga en itinerancia
+        request.setAllowedOverRoaming(true);
+        // Permitir descargar el tipo de red
+       // request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI);
+        // Establece la ruta y el nombre del archivo descargado
+        String fileName  = URLUtil.guessFileName(url, contentDisposition, mimeType);
+        Log.e("fileName:{}", fileName);
+        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+        // Otra opción es personalizar la ruta de descarga
+//        request.setDestinationUri()
+//        request.setDestinationInExternalFilesDir()
+        final DownloadManager downloadManager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+        // Agregar una tarea de descarga
+        long downloadId = downloadManager.enqueue(request);
+        MDToast toast = MDToast.makeText(MainActivity.this,"Descarga COMPLETADA..." + String.valueOf(downloadId) ,
+                Toast.LENGTH_LONG, MDToast.TYPE_SUCCESS);
+        toast.show();
+        Log.e("downloadId:{}", String.valueOf(downloadId));
+    }
+    public File getTempFile(Context context, String url) {
+        File file = null;
+        try {
+            String fileName = Uri.parse(url).getLastPathSegment();
+            file = File.createTempFile(fileName, null, context.getCacheDir());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return file;
+    }
+        // clase interna
     public class MyWebViewClient extends WebViewClient {
         // Si hay un enlace en la página, si desea hacer clic en el enlace para continuar respondiendo en el navegador actual,
         // En lugar de responder al enlace en el navegador del sistema Android recién abierto, debe anular el objeto WebViewClient de la vista web.
@@ -101,7 +182,118 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype,
                                     long contentLength) {
-            Toast a = Toast.makeText(getApplicationContext(), "descarga en curso", Toast.LENGTH_LONG);
+
+          /*  MDToast toast = MDToast.makeText(MainActivity.this,"Iniciando Descarga...",
+                    Toast.LENGTH_LONG, MDToast.TYPE_INFO);
+            toast.show();*/
+
+          //  Log.e("url",""+ url);
+           // Log.e("userAgent",""+ userAgent);
+           // Log.e("contentDisposition",""+ contentDisposition);
+           // Log.e("mimetype",""+ mimetype);
+
+
+            try {
+                Uri uri = Uri.parse(url.replace("blob:",""));
+                Intent intent = new Intent(Intent.ACTION_VIEW,uri);
+                startActivity(intent);
+                //downloadBySystem(url,contentDisposition,mimetype);
+                /*CookieManager cookieManager = CookieManager.getInstance();
+                java.net.URL url2 = new URL(url);
+                String cookie = cookieManager.getCookie(url2.getHost());
+                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                request.addRequestHeader("Cookie", cookie);
+                request.setMimeType(mimetype);
+                request.allowScanningByMediaScanner();
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                String filename = URLUtil.guessFileName(url, contentDisposition, mimetype);
+                new File(Environment.getExternalStorageDirectory() + "/Download/pkuhelper/").mkdirs();
+                File file = new File(Environment.getExternalStorageDirectory() + "/Download/pkuhelper/" + filename);
+                if (file.exists()) file.delete();
+                request.setDestinationUri(Uri.fromFile(file));
+                request.setTitle("mio" + filename + "...");
+                request.setDescription("mioss" + file.getAbsolutePath());
+                DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+                downloadManager.enqueue(request);*/
+
+               /* DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url.replace("blob:","")));
+
+
+                //DownloadManager.Request request = new DownloadManager.Request( Uri.parse(url));
+                request.allowScanningByMediaScanner();
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "download");
+                DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                dm.enqueue(request);*/
+
+
+                //titulo y descripcion para la descarga del archivo
+                //request.setTitle(URLUtil.guessFileName(url, contentDisposition, mimetype));
+                //request.setDescription("Downloading file...");
+
+                //notificar que la descarga termino satisfactoriamente
+               // request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+
+               // String filename = URLUtil.guessFileName(url, contentDisposition, mimetype);
+
+               // new File(Environment.getExternalStorageDirectory() + "/Download/gpexprt/").mkdirs();
+              //  File file = new File(Environment.getExternalStorageDirectory() + "/Download/gpexprt/" + filename);
+              //  if (file.exists()) file.delete();
+               // request.setDestinationUri(Uri.fromFile(file));
+               // request.setTitle("mio" + filename + "...");
+                //request.setDescription("mioss" + file.getAbsolutePath());
+               // DownloadManager downloadManager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+              //  downloadManager.enqueue(request);
+
+                //especificar el directorio destino de la descarga
+              //  request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "cojelo.txt");
+
+                //Ahora simplemente llame al servicio de descarga que hay en Android e
+                // inicie la descarga.
+               // DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+               // dm.enqueue(request);
+
+               /* BroadcastReceiver onComplete = new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        Toast.makeText(getApplicationContext(),
+                                "Downloading Complete", Toast.LENGTH_SHORT).show();
+                    }
+                };*/
+
+               /* MDToast toast = MDToast.makeText(MainActivity.this,"Descarga COMPLETADA..." ,
+                        Toast.LENGTH_LONG, MDToast.TYPE_SUCCESS);
+                toast.show();*/
+                        //CustomToast.showInfoToast(subActivity, "文件下载中，请在通知栏查看进度");
+            } catch (Exception e) {
+                MDToast toast = MDToast.makeText(MainActivity.this,"Error al  Descargar archivo..." + e,
+                        Toast.LENGTH_LONG, MDToast.TYPE_ERROR);
+                toast.show();
+                //startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+            }
+
+        /*Uri uri = Uri.parse(url);
+            Intent intent = new Intent(Intent.ACTION_VIEW,uri);
+            startActivity(intent);*/
+
+           /* DownloadManager.Request request = new DownloadManager.Request( Uri.parse(url));
+            request.setMimeType(mimetype);
+            String cookies = CookieManager.getInstance().getCookie(url);
+            request.addRequestHeader("cookie", cookies);
+            request.addRequestHeader("User-Agent", userAgent);
+            request.setDescription("Downloading File...");
+            request.setTitle(URLUtil.guessFileName(url, contentDisposition, mimetype));
+            request.allowScanningByMediaScanner();
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            request.setDestinationInExternalPublicDir( Environment.DIRECTORY_DOWNLOADS,
+                    URLUtil.guessFileName( url, contentDisposition, mimetype));
+            DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+            dm.enqueue(request); Toast.makeText(getApplicationContext(), "Downloading File",
+                    Toast.LENGTH_LONG).show();*/
+
+            //especificar el directorio destino de la descarga
+
+          /*  Toast a = Toast.makeText(getApplicationContext(), "descarga en curso", Toast.LENGTH_LONG);
             a.show();
             if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                 Toast t = Toast.makeText(getApplicationContext(), "Se requiere tarjeta SD", Toast.LENGTH_LONG);
@@ -110,9 +302,8 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             MyWebViewDownLoadListener.DownloaderTask task = new MyWebViewDownLoadListener.DownloaderTask();
-            task.execute(url);
+            task.execute(url);*/
         }
-
         private class DownloaderTask extends AsyncTask<String, Void, String> {
 
             public DownloaderTask() {
@@ -309,6 +500,8 @@ public class MainActivity extends AppCompatActivity {
 
 
         }
+
+
 
     }
 
