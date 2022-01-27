@@ -1,2 +1,2 @@
-include ':app', ':md-toast'
-rootProject.name = "App Base"
+include ':app'
+rootProject.name = "cu.simbiosissurl.gpe"
