@@ -19,6 +19,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.DownloadListener;
+import android.webkit.MimeTypeMap;
 import android.webkit.URLUtil;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
@@ -40,6 +41,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
@@ -193,64 +196,63 @@ public class MainActivity extends AppCompatActivity {
                                     long contentLength) {
 
             Log.e("mimetye", mimeType);
-            Toast a = Toast.makeText(getApplicationContext(), "mimetype:" + mimeType, Toast.LENGTH_LONG);
-            a.show();
+           // Toast a = Toast.makeText(getApplicationContext(), "mimetype:" + mimeType, Toast.LENGTH_LONG);
+            //a.show();
           /*  MDToast toast = MDToast.makeText(MainActivity.this,"Iniciando Descarga...",
                     Toast.LENGTH_LONG, MDToast.TYPE_INFO);
             toast.show();*/
 
 
-           final DownloadManager.Request request = new DownloadManager.Request(Uri.parse(
-                        url.replace("blob:","")));
-
-            request.setMimeType(mimeType);
-            String cookies = CookieManager.getInstance().getCookie(url);
-            request.addRequestHeader("cookie", cookies);
-            request.addRequestHeader("User-Agent", userAgent);
-            request.setDescription("Downloading File...");
-            request.setTitle(URLUtil.guessFileName(url, contentDisposition, mimeType));
-            request.allowScanningByMediaScanner();
-            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-            request.setDestinationInExternalPublicDir(
-                    Environment.DIRECTORY_DOWNLOADS, URLUtil.guessFileName(
-                            url, contentDisposition, mimeType));
-            DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-            dm.enqueue(request);
-            Toast.makeText(getApplicationContext(), "Downloading File", Toast.LENGTH_LONG).show();
-
-
-            new Thread("Browser download") {
-                    public void run() {
-                        dm.enqueue(request);
-                    }
-                }.start();
-                //dm.enqueue(request);
-
-                Toast.makeText(getApplicationContext(), "Downloading...", Toast.LENGTH_SHORT).show();
-                registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
-
-
-
-
-            new Thread("Browser download"){
-                public void run() {
-                    dm.enqueue(request);
-                }
-            }.start();
+//           final DownloadManager.Request request = new DownloadManager.Request(Uri.parse(
+//                        url.replace("blob:","")));
+//
+//            request.setMimeType(mimeType);
+//            String cookies = CookieManager.getInstance().getCookie(url);
+//            request.addRequestHeader("cookie", cookies);
+//            request.addRequestHeader("User-Agent", userAgent);
+//            request.setDescription("Downloading File...");
+//            request.setTitle(URLUtil.guessFileName(url, contentDisposition, mimeType));
+//            request.allowScanningByMediaScanner();
+//            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+//            request.setDestinationInExternalPublicDir(
+//                    Environment.DIRECTORY_DOWNLOADS, URLUtil.guessFileName(
+//                            url, contentDisposition, mimeType));
+//            DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+//            dm.enqueue(request);
+//            Toast.makeText(getApplicationContext(), "Downloading File", Toast.LENGTH_LONG).show();
+//                //dm.enqueue(request);
+//
+//                Toast.makeText(getApplicationContext(), "Downloading...", Toast.LENGTH_SHORT).show();
+//                registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+//
+//
+//
+//
+//            new Thread("Browser download"){
+//                public void run() {
+//                    dm.enqueue(request);
+//                }
+//            }.start();
 
             registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
             //especificar el directorio destino de la descarga
 
-          /*  Toast a = Toast.makeText(getApplicationContext(), "descarga en curso", Toast.LENGTH_LONG);
-            a.show();
-            if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+
+           /* if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                 Toast t = Toast.makeText(getApplicationContext(), "Se requiere tarjeta SD", Toast.LENGTH_LONG);
                 t.setGravity(Gravity.CENTER, 0, 0);
                 t.show();
                 return;
-            }
-            MyWebViewDownLoadListener.DownloaderTask task = new MyWebViewDownLoadListener.DownloaderTask();
-            task.execute(url);*/
+            }*/
+            Uri urlDowload = Uri.parse(url.replace("blob:",""));
+
+            String fileName = URLUtil.guessFileName(url, contentDisposition, mimeType);
+            String destPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                    .getAbsolutePath() + File.separator + fileName;
+            new DownloadTask().execute(String.valueOf(urlDowload), destPath);
+
+          //  MyWebViewDownLoadListener.DownloaderTask task = new MyWebViewDownLoadListener.DownloaderTask();
+           // task.execute(String.valueOf(urlDowload));
         }
         BroadcastReceiver onComplete = new BroadcastReceiver() {
             @Override
@@ -285,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
 //// client.getParams (). setIntParameter ("http.socket.timeout", 3000); // Establecer tiempo de espera
 //                    HttpGet get = new HttpGet(url);
 //                    HttpResponse response = client.execute(get);
-//                    if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
+//                    //if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
 //                        HttpEntity entity = response.getEntity();
 //                        InputStream input = entity.getContent();
 //
@@ -294,9 +296,9 @@ public class MainActivity extends AppCompatActivity {
 //                        input.close();
 ////					entity.consumeContent();
 //                        return fileName;
-//                    } else {
-//                        return null;
-//                    }
+//                   // } else {
+//                      // return null;
+//                   // }
 //                } catch (Exception e) {
 //                    e.printStackTrace();
 //                    return null;
@@ -459,7 +461,76 @@ public class MainActivity extends AppCompatActivity {
 //
 //        }
 
+        private class DownloadTask extends AsyncTask<String, Void, Void> {
+            // Pasar dos parámetros: URL y ruta de destino
+            private String url;
+            private String destPath;
 
+            @Override
+            protected void onPreExecute() {
+                Toast a = Toast.makeText(getApplicationContext(), "Iniciar descarga", Toast.LENGTH_LONG);
+                a.show();
+                //log.info ("Iniciar descarga");
+            }
+
+            @Override
+            protected Void doInBackground(String... params) {
+                //log.debug("doInBackground. url:{}, dest:{}", params[0], params[1]);
+                url = params[0];
+                destPath = params[1];
+                OutputStream out = null;
+                HttpURLConnection urlConnection = null;
+                try {
+                    URL url = new URL(params[0]);
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                    urlConnection.setConnectTimeout(15000);
+                    urlConnection.setReadTimeout(15000);
+                    InputStream in = urlConnection.getInputStream();
+                    out = new FileOutputStream(params[1]);
+                    byte[] buffer = new byte[10 * 1024];
+                    int len;
+                    while ((len = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, len);
+                    }
+                    in.close();
+                } catch (IOException e) {
+                    Log.e("e",""+ e);
+                } finally {
+                    if (urlConnection != null) {
+                        urlConnection.disconnect();
+                    }
+                    if (out != null) {
+                        try {
+                            out.close();
+                        } catch (IOException e) {
+                            Log.e("e",""+ e);
+                        }
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                Log.e("Completar","la descarga");
+                Intent handlerIntent = new Intent(Intent.ACTION_VIEW);
+                String mimeType = getMIMEType(url);
+                Uri uri = Uri.fromFile(new File(destPath));
+               // log.debug("mimiType:{}, uri:{}", mimeType, uri);
+                handlerIntent.setDataAndType(uri, mimeType);
+                startActivity(handlerIntent);
+            }
+        }
+
+        private String getMIMEType(String url) {
+            String type = null;
+            String extension = MimeTypeMap.getFileExtensionFromUrl(url);
+            //log.debug("extension:{}", extension);
+            if (extension != null) {
+                type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+            }
+            return type;
+        }
 
     }
 
