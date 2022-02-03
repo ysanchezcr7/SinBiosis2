@@ -145,10 +145,39 @@ public class MainActivity extends AppCompatActivity {
         // Si hay un enlace en la página, si desea hacer clic en el enlace para continuar respondiendo en el navegador actual,
         // En lugar de responder al enlace en el navegador del sistema Android recién abierto, debe anular el objeto WebViewClient de la vista web.
 
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+       @Override
+       public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                String FileName = "";
                 if (url == null || url.startsWith("http://") || url.startsWith("https://")) {
-                    return false;
+                    if(url.startsWith("https://gpetest.simbiosis-dg-apps.com/app/export/exporterallptt.html")){
+                        FileName = "todos-mis-pacientes.gpexprt";
+                         DownloadAsyncTask task = new DownloadAsyncTask();
+                         task.execute(url,FileName);
+                        //downloadBySystem(url,"",FileName);
+                        //Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        //view.getContext().startActivity(intent);
+                        return true;
+
+                    }else if(url.startsWith("https://gpetest.simbiosis-dg-apps.com/app/export/exporterslctdptt.html") ){
+
+                        FileName = "mis-pacientes-seleccionados.gpexprt";
+                        // downloadBySystem(url,"",FileName);
+
+                        //new DownloadTask().execute(String.valueOf(Uri.parse(url)));
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        view.getContext().startActivity(intent);
+                        return true;
+                    }else if(url.startsWith("https://gpetest.simbiosis-dg-apps.com/app/export/exporteralldata.html") ){
+                        FileName = "todos-mis-datos.gpexprt";
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        view.getContext().startActivity(intent);
+                        //downloadBySystem(url,"",FileName);
+                        return true;
+
+                    }else{
+                        return false;
+                    }
+
                 }
                 try {
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
@@ -214,22 +243,17 @@ public class MainActivity extends AppCompatActivity {
 
 
             Uri urlDowload = Uri.parse(url.replace("blob:",""));
-            URI uri = null;
-            try {
-                uri = new URI(urlDowload.toString());
-                uri.toASCIIString();
 
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-            }
+
 
             //String fileName = URLUtil.guessFileName(url, contentDisposition, mimeType);
             //String destPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             //        .getAbsolutePath() + File.separator + fileName;
            // new DownloadTask().execute(String.valueOf(urlDowload), destPath);
 
-            MyWebViewDownLoadListener.DownloaderTask task = new MyWebViewDownLoadListener.DownloaderTask();
-            task.execute(String.valueOf(uri));
+          //  MyWebViewDownLoadListener.DownloaderTask task = new MyWebViewDownLoadListener.DownloaderTask();
+          //  task.execute(String.valueOf(uri));
+             new DownloadAsyncTask().execute(String.valueOf(urlDowload));
         }
         BroadcastReceiver onComplete = new BroadcastReceiver() {
             @Override
@@ -240,139 +264,138 @@ public class MainActivity extends AppCompatActivity {
 
         };
 
-        private class DownloaderTask extends AsyncTask<String, Void, String> {
 
-            public DownloaderTask() {
-            }
+    }
+    private class DownloaderTask extends AsyncTask<String, Void, String> {
 
-            @Override
-            protected String doInBackground(String... params) {
-                // TODO Auto-generated method stub
-                String url = params[0];
+        public DownloaderTask() {
+        }
 
-
+        @Override
+        protected String doInBackground(String... params) {
+            // TODO Auto-generated method stub
+            String url = params[0];
+            String fileName= params[1];
 
 //			Log.i("tag", "url="+url);
-
-                String fileName = url.substring(url.lastIndexOf("/") + 1);
-
-                fileName = URLDecoder.decode(fileName);
-                //String fileName = "mis-pacientes.gpexprt";
+           // String fileName = url.substring(url.lastIndexOf("/") + 1);
+            //fileName = URLDecoder.decode(fileName);
+            //String fileName = "mis-pacientes.gpexprt";
 //                String fileName = getFileNameFromURL(url);
 //                Log.i("tag", "fileName=" + fileName);
-                new File(Environment.getExternalStorageDirectory() + "/Download/gpe").mkdirs();
+            new File(Environment.getExternalStorageDirectory() + "/Download/gpe").mkdirs();
 
-                File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS +"/gpe");
+            File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS +"/gpe");
 
-                //File directory = Environment.getExternalStorageDirectory() ;
-                File file = new File(directory, fileName);
-                if (file.exists()) {
-                    Log.i("tag", "The file has already exists.");
-                    return fileName;
-                }
-                try {
-                    HttpClient client = new DefaultHttpClient();
+            //File directory = Environment.getExternalStorageDirectory() ;
+            File file = new File(directory, fileName);
+            if (file.exists()) {
+                Log.i("tag", "The file has already exists.");
+                return fileName;
+            }
+            try {
+                HttpClient client = new DefaultHttpClient();
 // client.getParams (). setIntParameter ("http.socket.timeout", 3000); // Establecer tiempo de espera
-                    HttpGet get = new HttpGet(url);
-                    HttpResponse response = client.execute(get);
-                    //if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
-                        HttpEntity entity = response.getEntity();
-                        InputStream input = entity.getContent();
+                HttpGet get = new HttpGet(url);
+                HttpResponse response = client.execute(get);
+                if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
+                HttpEntity entity = response.getEntity();
+                InputStream input = entity.getContent();
 
-                        writeToSDCard(fileName, input);
+                writeToSDCard(fileName, input);
 
-                        input.close();
+                input.close();
 //					entity.consumeContent();
-                        return fileName;
-                   // } else {
-                      // return null;
-                   // }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return null;
-                }
-
+                return fileName;
+                }else {
+                 return null;
+                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
             }
 
-            @Override
-            protected void onCancelled() {
-                // TODO Auto-generated method stub
-                super.onCancelled();
-            }
+        }
 
-            @Override
-            protected void onPostExecute(String result) {
-                // TODO Auto-generated method stub
-                super.onPostExecute(result);
-               // closeProgressDialog();
-                progressDialog.dismiss();
-                if (result == null) {
-                    Toast t = Toast.makeText(getApplicationContext(), "¡Error de conexión! ¡Inténtalo de nuevo más tarde!", Toast.LENGTH_LONG);
-                    t.setGravity(Gravity.CENTER, 0, 0);
-                    t.show();
-                    return;
-                }
+        @Override
+        protected void onCancelled() {
+            // TODO Auto-generated method stub
+            super.onCancelled();
+        }
 
-                Toast t = Toast.makeText(getApplicationContext(), "Guardado archivo", Toast.LENGTH_LONG);
+        @Override
+        protected void onPostExecute(String result) {
+            // TODO Auto-generated method stub
+            super.onPostExecute(result);
+            // closeProgressDialog();
+            progressDialog.dismiss();
+            if (result == null) {
+                Toast t = Toast.makeText(getApplicationContext(), "¡Error de conexión! ¡Inténtalo de nuevo más tarde!", Toast.LENGTH_LONG);
                 t.setGravity(Gravity.CENTER, 0, 0);
                 t.show();
-               // File directory = Environment.getExternalStorageDirectory();
-                File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS +"/gpe");
-
-                File file = new File(directory, result);
-                Log.i("tag", "Path=" + file.getAbsolutePath());
-
-
-                //Intent intent = getFileIntent(file);
-               // startActivity(intent);
-
+                return;
             }
 
-            @Override
-            protected void onPreExecute() {
-                // TODO Auto-generated method stub
-                super.onPreExecute();
-                progressDialog.show();
-                //showProgressDialog();
+            Toast t = Toast.makeText(getApplicationContext(), "Guardado archivo", Toast.LENGTH_LONG);
+            t.setGravity(Gravity.CENTER, 0, 0);
+            t.show();
+            // File directory = Environment.getExternalStorageDirectory();
+            File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS +"/gpe");
+
+            File file = new File(directory, result);
+            Log.i("tag", "Path=" + file.getAbsolutePath());
+
+
+            //Intent intent = getFileIntent(file);
+            // startActivity(intent);
+
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+            progressDialog.show();
+            //showProgressDialog();
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            // TODO Auto-generated method stub
+            super.onProgressUpdate(values);
+        }
+
+
+
+        private ProgressDialog mDialog;
+
+        private void showProgressDialog() {
+            if (mDialog == null) {
+                mDialog = new ProgressDialog(getApplicationContext());
+                mDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER); // Establece el estilo en una barra de progreso circular
+                mDialog.setMessage("Cargando, por favor espere ...");
+                mDialog.setIndeterminate(false); // Establecer si la barra de progreso es ambigua
+                mDialog.setCancelable(true); // Establezca si la barra de progreso se puede cancelar presionando la tecla Atrás
+                mDialog.setCanceledOnTouchOutside(false);
+                mDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        // TODO Auto-generated method stub
+                        mDialog = null;
+                    }
+                });
+                mDialog.show();
+
             }
+        }
 
-            @Override
-            protected void onProgressUpdate(Void... values) {
-                // TODO Auto-generated method stub
-                super.onProgressUpdate(values);
+        private void closeProgressDialog() {
+            if (mDialog != null) {
+                mDialog.dismiss();
+                mDialog = null;
             }
-
-
-
-            private ProgressDialog mDialog;
-
-            private void showProgressDialog() {
-                if (mDialog == null) {
-                    mDialog = new ProgressDialog(getApplicationContext());
-                    mDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER); // Establece el estilo en una barra de progreso circular
-                    mDialog.setMessage("Cargando, por favor espere ...");
-                    mDialog.setIndeterminate(false); // Establecer si la barra de progreso es ambigua
-                    mDialog.setCancelable(true); // Establezca si la barra de progreso se puede cancelar presionando la tecla Atrás
-                    mDialog.setCanceledOnTouchOutside(false);
-                    mDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-
-                        @Override
-                        public void onDismiss(DialogInterface dialog) {
-                            // TODO Auto-generated method stub
-                            mDialog = null;
-                        }
-                    });
-                    mDialog.show();
-
-                }
-            }
-
-            private void closeProgressDialog() {
-                if (mDialog != null) {
-                    mDialog.dismiss();
-                    mDialog = null;
-                }
-            }
+        }
 
             /*public Intent getFileIntent(File file) {
 //		 Uri uri = Uri.parse("http://m.ql18.com.cn/hpf10/1.pdf");
@@ -386,63 +409,63 @@ public class MainActivity extends AppCompatActivity {
                 return intent;
             }*/
 
-            public void writeToSDCard(String fileName, InputStream input) {
+        public void writeToSDCard(String fileName, InputStream input) {
 
-                //if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                    //File directory = Environment.getExternalStorageDirectory();
-                    File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS +"/gpe");
+            //if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            //File directory = Environment.getExternalStorageDirectory();
+            File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS +"/gpe");
 
-                    File file = new File(directory, fileName);
+            File file = new File(directory, fileName);
 //			if(file.exists()){
 //				Log.i("tag", "The file has already exists.");
 //				return;
 //			}
-                    try {
-                        FileOutputStream fos = new FileOutputStream(file);
-                        byte[] b = new byte[2048];
-                        int j = 0;
-                        while ((j = input.read(b)) != -1) {
-                            fos.write(b, 0, j);
-                        }
-                        fos.flush();
-                        fos.close();
-                    } catch (FileNotFoundException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                //} else {
-                 //  Log.i("tag", "NO SDCard.");
-               // }
+            try {
+                FileOutputStream fos = new FileOutputStream(file);
+                byte[] b = new byte[2048];
+                int j = 0;
+                while ((j = input.read(b)) != -1) {
+                    fos.write(b, 0, j);
+                }
+                fos.flush();
+                fos.close();
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
+            //} else {
+            //  Log.i("tag", "NO SDCard.");
+            // }
+        }
 
-            private String getMIMEType(File f) {
-                String type = "";
-                String fName = f.getName();
-                // Obtener extensión
-                String end = fName.substring(fName.lastIndexOf(".") + 1, fName.length()).toLowerCase();
+        private String getMIMEType(File f) {
+            String type = "";
+            String fName = f.getName();
+            // Obtener extensión
+            String end = fName.substring(fName.lastIndexOf(".") + 1, fName.length()).toLowerCase();
 
-                //Determinar MimeType según el tipo de extensión *
-                if (end.equals("pdf")) {
-                    type = "application/pdf";//
-                } else if (end.equals("m4a") || end.equals("mp3") || end.equals("mid") ||
-                        end.equals("xmf") || end.equals("ogg") || end.equals("wav")) {
-                    type = "audio/*";
-                } else if (end.equals("3gp") || end.equals("mp4")) {
-                    type = "video/*";
-                } else if (end.equals("jpg") || end.equals("gif") || end.equals("png") ||
-                        end.equals("jpeg") || end.equals("bmp")) {
-                    type = "image/*";
-                } else if (end.equals("apk")) {
-                    /* android.permission.INSTALL_PACKAGES */
-                    type = "application/vnd.android.package-archive";
-                }
-                else if (end.equals("text/plain")) {
-                    /* android.permission.INSTALL_PACKAGES */
-                    type = "gpexprt/*";
-                }
+            //Determinar MimeType según el tipo de extensión *
+            if (end.equals("pdf")) {
+                type = "application/pdf";//
+            } else if (end.equals("m4a") || end.equals("mp3") || end.equals("mid") ||
+                    end.equals("xmf") || end.equals("ogg") || end.equals("wav")) {
+                type = "audio/*";
+            } else if (end.equals("3gp") || end.equals("mp4")) {
+                type = "video/*";
+            } else if (end.equals("jpg") || end.equals("gif") || end.equals("png") ||
+                    end.equals("jpeg") || end.equals("bmp")) {
+                type = "image/*";
+            } else if (end.equals("apk")) {
+                /* android.permission.INSTALL_PACKAGES */
+                type = "application/vnd.android.package-archive";
+            }
+            else if (end.equals("text/plain")) {
+                /* android.permission.INSTALL_PACKAGES */
+                type = "gpexprt/*";
+            }
 //      else if(end.equals("pptx")||end.equals("ppt")){
 //    	  type = "application/vnd.ms-powerpoint";
 //      }else if(end.equals("docx")||end.equals("doc")){
@@ -450,51 +473,49 @@ public class MainActivity extends AppCompatActivity {
 //      }else if(end.equals("xlsx")||end.equals("xls")){
 //    	  type = "application/vnd.ms-excel";
 //      }
-                else {
+            else {
 // / * Si no se puede abrir directamente, salte de la lista de software para que el usuario elija * /
-                    type = "*/*";
-                }
-                return type;
+                type = "*/*";
             }
-
-            public String getFileNameFromURL(String url) {
-                if (url == null) {
-                    return "";
-                }
-                try {
-                    URL resource = new URL(url);
-                    String host = resource.getHost();
-                    if (host.length() > 0 && url.endsWith(host)) {
-                        // handle ...example.com
-                        return "";
-                    }
-                }
-                catch(MalformedURLException e) {
-                    return "";
-                }
-
-                int startIndex = url.lastIndexOf('/') + 1;
-                int length = url.length();
-
-                // find end index for ?
-                int lastQMPos = url.lastIndexOf('?');
-                if (lastQMPos == -1) {
-                    lastQMPos = length;
-                }
-
-                // find end index for #
-                int lastHashPos = url.lastIndexOf('#');
-                if (lastHashPos == -1) {
-                    lastHashPos = length;
-                }
-
-                // calculate the end index
-                int endIndex = Math.min(lastQMPos, lastHashPos);
-                return url.substring(startIndex, endIndex);
-            }
-
-
+            return type;
         }
+
+        public String getFileNameFromURL(String url) {
+            if (url == null) {
+                return "";
+            }
+            try {
+                URL resource = new URL(url);
+                String host = resource.getHost();
+                if (host.length() > 0 && url.endsWith(host)) {
+                    // handle ...example.com
+                    return "";
+                }
+            }
+            catch(MalformedURLException e) {
+                return "";
+            }
+
+            int startIndex = url.lastIndexOf('/') + 1;
+            int length = url.length();
+
+            // find end index for ?
+            int lastQMPos = url.lastIndexOf('?');
+            if (lastQMPos == -1) {
+                lastQMPos = length;
+            }
+
+            // find end index for #
+            int lastHashPos = url.lastIndexOf('#');
+            if (lastHashPos == -1) {
+                lastHashPos = length;
+            }
+
+            // calculate the end index
+            int endIndex = Math.min(lastQMPos, lastHashPos);
+            return url.substring(startIndex, endIndex);
+        }
+
 
     }
 
