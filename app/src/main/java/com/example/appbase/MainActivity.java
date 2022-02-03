@@ -36,7 +36,6 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 
-
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -73,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
     ProgressBar progressBar;
     ProgressDialog progressDialog;
     Context context;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -82,10 +82,9 @@ public class MainActivity extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= 23) {
             initPermission();
         }
-        progressBar=findViewById(R.id.progresbar);
-        progressDialog= new ProgressDialog(this);
+        progressBar = findViewById(R.id.progresbar);
+        progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Descargando Archivo por favor espere...");
-
 
 
         webview = findViewById(R.id.webView);
@@ -115,17 +114,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });*/
         webview.requestFocus();
-       //webview.loadUrl("file:///android_asset/risktest.html");
+        //webview.loadUrl("file:///android_asset/risktest.html");
         //webview.loadUrl(jcrs_sub.get(position).addr);
         webview.loadUrl(URLSistem);
-       // webview.loadDataWithBaseURL(null, URLSistem, "text/html", "UTF-8", null);
-       // webview.loadData(URLSistem, "text/html", "UTF-8");
+        // webview.loadDataWithBaseURL(null, URLSistem, "text/html", "UTF-8", null);
+        // webview.loadData(URLSistem, "text/html", "UTF-8");
         webview.setWebViewClient(new MyWebViewClient());
 
 
-        webview.setDownloadListener(new MyWebViewDownLoadListener());
+        // webview.setDownloadListener(new MyWebViewDownLoadListener());
         // Establecer el cliente de vista web
-
 
 
     }
@@ -134,68 +132,68 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
         if (webview.copyBackForwardList().getCurrentIndex() > 0) {
             webview.goBack();
-        }
-        else {
+        } else {
             // Your exit alert code, or alternatively line below to finish
             super.onBackPressed(); // finishes activity
         }
     }
-        // clase interna
+
+    // clase interna
     class MyWebViewClient extends WebViewClient {
         // Si hay un enlace en la página, si desea hacer clic en el enlace para continuar respondiendo en el navegador actual,
         // En lugar de responder al enlace en el navegador del sistema Android recién abierto, debe anular el objeto WebViewClient de la vista web.
 
-       @Override
-       public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                String FileName = "";
-                if (url == null || url.startsWith("http://") || url.startsWith("https://")) {
-                    if(url.startsWith("https://gpetest.simbiosis-dg-apps.com/app/export/exporterallptt.html")){
-                        FileName = "todos-mis-pacientes.gpexprt";
-                         DownloadAsyncTask task = new DownloadAsyncTask();
-                         task.execute(url,FileName);
-                        //downloadBySystem(url,"",FileName);
-                        //Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                        //view.getContext().startActivity(intent);
-                        return true;
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            String FileName = "";
+            if (url == null || url.startsWith("http://") || url.startsWith("https://")) {
+                if (url.startsWith("https://gpetest.simbiosis-dg-apps.com/app/export/exporterallptt.html")) {
+                    FileName = "todos-mis-pacientes.pdf";
+                    DownloaderTask task = new DownloaderTask();
+                    task.execute("https://www.granma.cu/file/pdf/2022/02/03/G_2022020301.pdf", FileName);
+                    //downloadBySystem(url,"",FileName);
+                    //Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    //view.getContext().startActivity(intent);
+                    return true;
 
-                    }else if(url.startsWith("https://gpetest.simbiosis-dg-apps.com/app/export/exporterslctdptt.html") ){
+                } else if (url.startsWith("https://gpetest.simbiosis-dg-apps.com/app/export/exporterslctdptt.html")) {
 
-                        FileName = "mis-pacientes-seleccionados.gpexprt";
-                        // downloadBySystem(url,"",FileName);
+                    FileName = "mis-pacientes-seleccionados.gpexprt";
+                    // downloadBySystem(url,"",FileName);
 
-                        //new DownloadTask().execute(String.valueOf(Uri.parse(url)));
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                        view.getContext().startActivity(intent);
-                        return true;
-                    }else if(url.startsWith("https://gpetest.simbiosis-dg-apps.com/app/export/exporteralldata.html") ){
-                        FileName = "todos-mis-datos.gpexprt";
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                        view.getContext().startActivity(intent);
-                        //downloadBySystem(url,"",FileName);
-                        return true;
-
-                    }else{
-                        return false;
-                    }
-
-                }
-                try {
+                    //new DownloadTask().execute(String.valueOf(Uri.parse(url)));
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                     view.getContext().startActivity(intent);
                     return true;
-                } catch (Exception e) {
-
-                    Toast t = Toast.makeText(getApplicationContext(), "shouldOverrideUrlLoading Exception:" + e,
-                            Toast.LENGTH_LONG);
-                    t.setGravity(Gravity.CENTER, 0, 0);
-                    t.show();
-                    Log.i("TAG", "shouldOverrideUrlLoading Exception:" + e);
+                } else if (url.startsWith("https://gpetest.simbiosis-dg-apps.com/app/export/exporteralldata.html")) {
+                    FileName = "todos-mis-datos.gpexprt";
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    view.getContext().startActivity(intent);
+                    //downloadBySystem(url,"",FileName);
                     return true;
+
+                } else {
+                    return false;
                 }
+
             }
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                view.getContext().startActivity(intent);
+                return true;
+            } catch (Exception e) {
+
+                Toast t = Toast.makeText(getApplicationContext(), "shouldOverrideUrlLoading Exception:" + e,
+                        Toast.LENGTH_LONG);
+                t.setGravity(Gravity.CENTER, 0, 0);
+                t.show();
+                Log.i("TAG", "shouldOverrideUrlLoading Exception:" + e);
+                return true;
+            }
+        }
 
 
-       public void onPageStarted(WebView view, String url, Bitmap favicon) {
+        public void onPageStarted(WebView view, String url, Bitmap favicon) {
             Log.i("", "onPageStarted");
             super.onPageStarted(view, url, favicon);
 
@@ -206,23 +204,23 @@ public class MainActivity extends AppCompatActivity {
             super.onPageFinished(view, url);
 
             Log.i("", "onPageFinished");
-           // closeProgress();
+            // closeProgress();
         }
 
         public void onReceivedError(WebView view, int errorCode,
                                     String description, String failingUrl) {
             Log.i("", "onReceivedError");
-           // closeProgress();
+            // closeProgress();
         }
     }
 
     // Si no hace nada, navegue por la web, haga clic en el botón "Atrás" del sistema, todo el navegador llamará a terminar () para finalizar,
     // Si desea volver a navegar por la página web en lugar de iniciar el navegador, debe procesar y consumir el evento Atrás en la Actividad actual.
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-         if((keyCode==KeyEvent.KEYCODE_BACK)&&webview.canGoBack()){
-         webview.goBack();
-         return true;
-         }
+        if ((keyCode == KeyEvent.KEYCODE_BACK) && webview.canGoBack()) {
+            webview.goBack();
+            return true;
+        }
         return false;
     }
 
@@ -235,26 +233,26 @@ public class MainActivity extends AppCompatActivity {
 
 
             Log.e("mimetye", mimeType);
-           // Toast a = Toast.makeText(getApplicationContext(), "mimetype:" + mimeType, Toast.LENGTH_LONG);
+            // Toast a = Toast.makeText(getApplicationContext(), "mimetype:" + mimeType, Toast.LENGTH_LONG);
             //a.show();
           /*  MDToast toast = MDToast.makeText(MainActivity.this,"Iniciando Descarga...",
                     Toast.LENGTH_LONG, MDToast.TYPE_INFO);
             toast.show();*/
 
 
-            Uri urlDowload = Uri.parse(url.replace("blob:",""));
-
+            Uri urlDowload = Uri.parse(url.replace("blob:", ""));
 
 
             //String fileName = URLUtil.guessFileName(url, contentDisposition, mimeType);
             //String destPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             //        .getAbsolutePath() + File.separator + fileName;
-           // new DownloadTask().execute(String.valueOf(urlDowload), destPath);
+            // new DownloadTask().execute(String.valueOf(urlDowload), destPath);
 
-          //  MyWebViewDownLoadListener.DownloaderTask task = new MyWebViewDownLoadListener.DownloaderTask();
-          //  task.execute(String.valueOf(uri));
-             new DownloadAsyncTask().execute(String.valueOf(urlDowload));
+            DownloaderTask task = new DownloaderTask();
+            task.execute(String.valueOf(urlDowload));
+            // new DownloadAsyncTask().execute(String.valueOf(urlDowload));
         }
+
         BroadcastReceiver onComplete = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -266,6 +264,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
     private class DownloaderTask extends AsyncTask<String, Void, String> {
 
         public DownloaderTask() {
@@ -275,17 +274,17 @@ public class MainActivity extends AppCompatActivity {
         protected String doInBackground(String... params) {
             // TODO Auto-generated method stub
             String url = params[0];
-            String fileName= params[1];
+            String fileName = params[1];
 
 //			Log.i("tag", "url="+url);
-           // String fileName = url.substring(url.lastIndexOf("/") + 1);
+            // String fileName = url.substring(url.lastIndexOf("/") + 1);
             //fileName = URLDecoder.decode(fileName);
             //String fileName = "mis-pacientes.gpexprt";
 //                String fileName = getFileNameFromURL(url);
 //                Log.i("tag", "fileName=" + fileName);
-            new File(Environment.getExternalStorageDirectory() + "/Download/gpe").mkdirs();
+            new File(Environment.getExternalStorageDirectory() + "/Download/pdf").mkdirs();
 
-            File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS +"/gpe");
+            File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/pdf");
 
             //File directory = Environment.getExternalStorageDirectory() ;
             File file = new File(directory, fileName);
@@ -299,17 +298,17 @@ public class MainActivity extends AppCompatActivity {
                 HttpGet get = new HttpGet(url);
                 HttpResponse response = client.execute(get);
                 if (HttpStatus.SC_OK == response.getStatusLine().getStatusCode()) {
-                HttpEntity entity = response.getEntity();
-                InputStream input = entity.getContent();
+                    HttpEntity entity = response.getEntity();
+                    InputStream input = entity.getContent();
 
-                writeToSDCard(fileName, input);
+                    writeToSDCard(fileName, input);
 
-                input.close();
+                    input.close();
 //					entity.consumeContent();
-                return fileName;
-                }else {
-                 return null;
-                 }
+                    return fileName;
+                } else {
+                    return null;
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 return null;
@@ -340,14 +339,20 @@ public class MainActivity extends AppCompatActivity {
             t.setGravity(Gravity.CENTER, 0, 0);
             t.show();
             // File directory = Environment.getExternalStorageDirectory();
-            File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS +"/gpe");
+            // File directory = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Downloads/Read.pdf");
+            File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/gpe");
 
             File file = new File(directory, result);
             Log.i("tag", "Path=" + file.getAbsolutePath());
 
+            try {
+                Intent intent = getFileIntent(file);
+                startActivity(intent);
+            } catch (Exception e) {
+                Toast toast = Toast.makeText(getApplicationContext(), "Error: " + e, Toast.LENGTH_LONG);
+                toast.show();
+            }
 
-            //Intent intent = getFileIntent(file);
-            // startActivity(intent);
 
         }
 
@@ -366,10 +371,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-
         private ProgressDialog mDialog;
 
-        private void showProgressDialog() {
+       /* private void showProgressDialog() {
             if (mDialog == null) {
                 mDialog = new ProgressDialog(getApplicationContext());
                 mDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER); // Establece el estilo en una barra de progreso circular
@@ -395,25 +399,35 @@ public class MainActivity extends AppCompatActivity {
                 mDialog.dismiss();
                 mDialog = null;
             }
-        }
+        }*/
 
-            /*public Intent getFileIntent(File file) {
+        public Intent getFileIntent(File file) {
+            Uri uri = null;
 //		 Uri uri = Uri.parse("http://m.ql18.com.cn/hpf10/1.pdf");
-                Uri uri = Uri.fromFile(file);
-                String type = getMIMEType(file);
-                Log.i("tag", "type=" + type);
-                Intent intent = new Intent("android.intent.action.VIEW");
-                intent.addCategory("android.intent.category.DEFAULT");
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.setDataAndType(uri, type);
-                return intent;
-            }*/
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                uri = Uri.parse(String.valueOf(file));
+            } else {
+                uri = Uri.fromFile(file);
+                // imageUri = Uri.fromFile(new File(filepath));
+            }
+
+            String type = getMIMEType(file);
+            //Log.i("tag", "type=" + type);
+            Intent intent = new Intent("android.intent.action.VIEW");
+            //intent.addCategory("android.intent.category.DEFAULT");
+            // intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+            intent.setDataAndType(uri, type);
+            return intent;
+
+
+        }
 
         public void writeToSDCard(String fileName, InputStream input) {
 
             //if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
             //File directory = Environment.getExternalStorageDirectory();
-            File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS +"/gpe");
+            File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/gpe");
 
             File file = new File(directory, fileName);
 //			if(file.exists()){
@@ -422,7 +436,7 @@ public class MainActivity extends AppCompatActivity {
 //			}
             try {
                 FileOutputStream fos = new FileOutputStream(file);
-                byte[] b = new byte[2048];
+                byte[] b = new byte[1024];
                 int j = 0;
                 while ((j = input.read(b)) != -1) {
                     fos.write(b, 0, j);
@@ -461,8 +475,7 @@ public class MainActivity extends AppCompatActivity {
             } else if (end.equals("apk")) {
                 /* android.permission.INSTALL_PACKAGES */
                 type = "application/vnd.android.package-archive";
-            }
-            else if (end.equals("text/plain")) {
+            } else if (end.equals("text/plain")) {
                 /* android.permission.INSTALL_PACKAGES */
                 type = "gpexprt/*";
             }
@@ -491,8 +504,7 @@ public class MainActivity extends AppCompatActivity {
                     // handle ...example.com
                     return "";
                 }
-            }
-            catch(MalformedURLException e) {
+            } catch (MalformedURLException e) {
                 return "";
             }
 
@@ -519,6 +531,142 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    
+
+    private class DownloadTask extends AsyncTask<String, Void, Void> {
+        // Pasar dos parámetros: URL y ruta de destino
+        private String url;
+        private String Filname;
+
+
+        @Override
+        protected void onPreExecute() {
+            Toast a = Toast.makeText(getApplicationContext(), "Iniciar descarga", Toast.LENGTH_LONG);
+            a.show();
+            //log.info ("Iniciar descarga");
+        }
+
+        @Override
+        protected Void doInBackground(String... params) {
+            //log.debug("doInBackground. url:{}, dest:{}", params[0], params[1]);
+            url = params[0];
+            Filname = params[1];
+            try {
+                //String s = url.replaceAll(" " , "%20");
+                //Uri link = Uri.parse(s);
+                // DownloadManager.Request request = new DownloadManager.Request(link);
+                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+
+                // DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url.replace("blob:","")));
+                //  request.setMimeType(mime);
+                //request.setMimeType("application/json");
+                //String mime = "application/json";
+                String cookies = CookieManager.getInstance().getCookie(url);
+                request.addRequestHeader("cookie", cookies);
+                //request.addRequestHeader("User-Agent", userAgent);
+                request.setDescription("Downloading file...");
+                //request.addRequestHeader("mimetype", mimeType);
+
+                //request.setTitle("Descargando archivo");
+
+                request.setAllowedOverMetered(true);
+                // Permitir que el registro sea visible en la interfaz de administración de descargas
+                request.setVisibleInDownloadsUi(true);
+                // Permitir la descarga en itinerancia
+                request.setAllowedOverRoaming(true);
+                //  String filename = URLUtil.guessFileName(url, params[1],mime);
+                // String filename = "mis-pacientes-seleccionados.gpexprt";
+                File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+
+                // new File(Environment.getExternalStorageDirectory() + "/Download/gpexprt").mkdirs();
+                //File file = new File(Environment.DIRECTORY_DOWNLOADS, filename);
+                //request.setDestinationInExternalFilesDir(MainActivity.this, Environment.DIRECTORY_DOWNLOADS + "/gpexprt", Filname);
+                // request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS + "/gpexprt", Filname);
+                request.setDestinationInExternalPublicDir(String.valueOf(directory), Filname);
+
+                // if (file.exists()) file.delete();
+                // request.setDestinationUri(Uri.fromFile(file));
+
+                //File file = new File( "/Download/gpexprt/");
+               /* request.setDestinationInExternalPublicDir(String.valueOf(file),
+                        filename +".gpexprt");*/
+
+                //String root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString();//Downloads folder path
+
+                // request.setDestinationInExternalPublicDir(root,filename);
+                //request.allowScanningByMediaScanner();
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+
+                DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                //dm.enqueue(request);
+                dm.enqueue(request);
+                // Log.d("downloadId:{}", "" +downloadId);
+
+                Toast.makeText(getApplicationContext(), "Downloading File", Toast.LENGTH_LONG).show();
+
+
+            } catch (Exception e) {
+
+                if (ContextCompat.checkSelfPermission(MainActivity.this,
+                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    // Should we show an explanation?
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                        Toast.makeText(getBaseContext(), "첨부파일 다운로드를 위해\n동의가 필요합니다.", Toast.LENGTH_LONG).show();
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                110);
+                    } else {
+                        Toast.makeText(getBaseContext(), "첨부파일 다운로드를 위해\n동의가 필요합니다.", Toast.LENGTH_LONG).show();
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                110);
+                    }
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        }
+
+
+    }
+
+    BroadcastReceiver onComplete = new BroadcastReceiver() {
+        @Override
+        /*public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(action)) {
+
+                // get the DownloadManager instance
+                DownloadManager manager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+
+                DownloadManager.Query q = new DownloadManager.Query();
+                Cursor c = manager.query(q);
+
+                if(c.moveToFirst()) {
+                    do {
+                        String name = c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_FILENAME));
+                        Toast.makeText(getApplicationContext(), "Downloading LISTENER: " + "file name: " + name, Toast.LENGTH_SHORT).show();
+
+                        //Log.i("DOWNLOAD LISTENER", "file name: " + name);
+                    } while (c.moveToNext());
+                } else {
+                    Toast.makeText(getApplicationContext(), "Downloading LISTENER: " + "empty cursor :(", Toast.LENGTH_SHORT).show();
+
+                    Log.i("DOWNLOAD LISTENER", "empty cursor :(");
+                }
+
+                c.close();
+            }
+        }*/
+        public void onReceive(Context context, Intent intent) {
+            Toast.makeText(getApplicationContext(), "Downloading Complete",
+                    Toast.LENGTH_SHORT).show();
+        }
+    };
 
     String[] permissions = new String[]{Manifest.permission.INTERNET,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -530,6 +678,7 @@ public class MainActivity extends AppCompatActivity {
     };
     // 2. Cree una mPermissionList y determine qué permisos no se otorgan uno por uno, y los permisos no autorizados se almacenan en mPerrrmissionList
     List<String> mPermissionList = new ArrayList<>();
+
     // Sentencia y solicitud de permiso
     private void initPermission() {
 
@@ -573,13 +722,14 @@ public class MainActivity extends AppCompatActivity {
             // Si no se permite el permiso
             if (hasPermissionDismiss) {
                 showPermissionDialog();// Vaya a la página de permisos de configuración del sistema o cierre directamente la página para evitar que continúe visitando
-            }else{
+            } else {
                 // Se pasan todos los permisos, puede continuar con el siguiente paso. . .
 
             }
         }
 
     }
+
     AlertDialog mPermissionDialog;
     String mPackName = "com.huawei.liwenzhi.weixinasr";
 
