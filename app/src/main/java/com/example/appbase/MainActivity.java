@@ -283,7 +283,7 @@ public class MainActivity extends AppCompatActivity {
 //                String fileName = getFileNameFromURL(url);
 //                Log.i("tag", "fileName=" + fileName);
 
-            File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/pdf");
+            File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/gpe");
 
             //File directory = Environment.getExternalStorageDirectory() ;
             File file = new File(directory, fileName);
