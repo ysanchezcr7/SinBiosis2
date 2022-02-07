@@ -282,7 +282,6 @@ public class MainActivity extends AppCompatActivity {
             //String fileName = "mis-pacientes.gpexprt";
 //                String fileName = getFileNameFromURL(url);
 //                Log.i("tag", "fileName=" + fileName);
-            new File(Environment.getExternalStorageDirectory() + "/Download/pdf").mkdirs();
 
             File directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS + "/pdf");
 
